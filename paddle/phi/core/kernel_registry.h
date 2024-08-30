@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <sys/time.h>
 #include <typeindex>
 #include <typeinfo>
 

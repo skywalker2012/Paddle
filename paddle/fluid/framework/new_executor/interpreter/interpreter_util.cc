@@ -872,6 +872,14 @@ void BuildOpFuncList(const phi::Place& place,
         }
 
         // step 5. run kernel
+        struct timeval t1;
+        struct timeval t2;
+        if (std::getenv("XPU_PADDLE_OP_TIME") != nullptr) {
+          gettimeofday(&t1, NULL);
+          VLOG(0) << "op_name " << op->Type() << " "
+                  << "start"
+                  << " " << kernel_type.place_ << " " << kernel_type.data_type_;
+        }
         if (run_phi_kernel &&
             op_func_node.phi_kernel_->GetKernelRegisteredType() ==
                 phi::KernelRegisteredType::FUNCTION) {
@@ -912,6 +920,16 @@ void BuildOpFuncList(const phi::Place& place,
           } else {
             op_func_node.kernel_func_(execution_context);
           }
+        }
+
+        if (op_with_kernel != nullptr &&
+            std::getenv("XPU_PADDLE_OP_TIME") != nullptr) {
+          dev_ctx->Wait();
+          gettimeofday(&t2, NULL);
+          uint32_t diff =
+              1000000 * (t2.tv_sec - t1.tv_sec) + t2.tv_usec - t1.tv_usec;
+          VLOG(0) << "op_name " << op->Type() << " " << diff << " "
+                  << kernel_type.place_ << " " << kernel_type.data_type_;
         }
 
         // for debug nan/inf

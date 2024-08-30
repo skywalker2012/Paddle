@@ -1188,7 +1188,27 @@ void ProgramInterpreter::RunInstruction(const Instruction& instr_node) {
 #endif
 
     if (!instr_node.IsArtificial()) {
+      struct timeval t1;
+      struct timeval t2;
+      if (std::getenv("XPU_PADDLE_OP_TIME") != nullptr) {
+        gettimeofday(&t1, NULL);
+        VLOG(0) << "op_name " << op->Type() << " "
+                << "start";
+      }
+
       RunOperator(instr_node);
+      auto op_with_kernel =
+          dynamic_cast<const framework::OperatorWithKernel*>(op);
+      if (op_with_kernel != nullptr &&
+          std::getenv("XPU_PADDLE_OP_TIME") != nullptr) {
+        platform::DeviceContextPool::Instance().Get(place_)->Wait();
+        gettimeofday(&t2, NULL);
+        uint32_t diff =
+            1000000 * (t2.tv_sec - t1.tv_sec) + t2.tv_usec - t1.tv_usec;
+        VLOG(0) << "op_name " << op->Type() << " " << diff << " " << place_
+                << " " << op_with_kernel->kernel_type()->data_type_;
+      }
+
       CheckGC(instr_node);
       if (FLAGS_log_memory_stats) {
         memory::LogDeviceMemoryStats(place_, instr_node.OpBase()->Type());
