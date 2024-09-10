@@ -733,7 +733,7 @@ int64_t GradNodeBase::RegisterGradientHook(
     size_t slot_id, size_t rank, std::shared_ptr<egr::TensorHook>&& hook) {
   gradient_hooks_.emplace(next_hook_id_,
                           std::make_tuple(slot_id, rank, std::move(hook)));
-  return next_hook_id_++;
+  return next_hook_id_--;
 }
 
 paddle::small_vector<std::vector<paddle::Tensor>, kSlotSmallVectorSize>
